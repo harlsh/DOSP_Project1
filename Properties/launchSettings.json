@@ -2,7 +2,7 @@
   "profiles": {
     "DOSP_Project1": {
       "commandName": "Project",
-      "commandLineArgs": "6 8"
+      "commandLineArgs": "server 6 8"
     }
   }
 }

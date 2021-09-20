@@ -5,8 +5,7 @@ open Akka.FSharp
 open System.Security.Cryptography
 open System.Diagnostics
 open Message
-open Server
-open Client
+
 
 let system = System.create "my-system" (Configuration.load ())
 let mutable counter = 0L
@@ -100,27 +99,24 @@ let startCompute N K W =
     let masterRef = spawn system "master" (masterActor N K)
     masterRef <! DispatcherMessage(N, K, W)
     system.WhenTerminated.Wait()
-    
+
+let server (mailbox: Actor<_>) = 
+    let rec loop() = actor {
+        let! message = mailbox.Receive()
+        match message with
+        | PingMessage -> printfn "Got a ping!"
+        | _ -> printfn "Weird Message"
+        
+    }
+    loop()
 
 [<EntryPoint>]
 let main argv =
     
-    let clientOrServer = argv.[0]
     let numberOfZeros = argv.[1] |> int
     let numberOfWorkers = argv.[2] |> int
     let stringLength = 16
-    //printfn "Number of Zeros = %i\nNumber of Workers = %i\nMax String Length = %i" numberOfZeros numberOfWorkers stringLength
-    //time(fun () -> startCompute stringLength numberOfZeros numberOfWorkers)
-    
-    if clientOrServer="client" then
-        let serverDetails = (clientOrServer.Split ':')
-        let serverIp = serverDetails.[1]
-        let serverPort = serverDetails.[2]
-        let serverRef = runClient serverIp serverPort
-        0
-    elif clientOrServer="server" then
-        let serverRef = runServer
-        0
-    else
-        printfn "Wrong Input"
-        0
+    printfn "Number of Zeros = %i\nNumber of Workers = %i\nMax String Length = %i" numberOfZeros numberOfWorkers stringLength
+    time(fun () -> startCompute stringLength numberOfZeros numberOfWorkers)
+
+    0
