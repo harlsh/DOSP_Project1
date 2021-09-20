@@ -15,6 +15,6 @@ dotnet fsi Server.fsx 5
 ```
 Then run the client 
 ```bash
-dotnet fsi Client.fsx 
+dotnet fsi Client.fsx <ip:port> 
 ```
 The server(master) will just keep distributing the workload to the clients(slaves).
