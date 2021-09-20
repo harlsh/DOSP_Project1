@@ -4,4 +4,4 @@ type MessageType =
     | WorkerMessage of int*int
     | FinishMessage of string*string
     | RepeatMessage
-
+    | PingMessage

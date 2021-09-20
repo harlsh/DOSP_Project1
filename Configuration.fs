@@ -1,10 +1,8 @@
 ﻿module Configuration
 
-open System
 open Akka.FSharp
-open Akka.Configuration
 
-let configuration = Configuration.parse
+let serverConfig = Configuration.parse
                         @"akka {
                         actor.provider = ""Akka.Remote.RemoteActorRefProvider, Akka.Remote""
                         debug : {
@@ -20,18 +18,19 @@ let configuration = Configuration.parse
                         }
         }"
 
-let server (mailbox: Actor<_>) = 
-    let rec loop() = actor {
-        let! message = mailbox.Receive()
-        printfn "%s" message
-    }
-    loop()
+let clientConfig = Configuration.parse
+                        @"akka {
+                            actor {
+                                provider = ""Akka.Remote.RemoteActorRefProvider, Akka.Remote""
+            
+                            }
+                            remote {
+                                helios.tcp {
+                                    port = 2552
+                                    hostname = localhost
+                                }
+                            }
+                        }"
 
 
-[<EntryPoint>]
-let main argv =
-    let remoteSystem = System.create "server" configuration
-    let serveRef = spawn remoteSystem "server" server
-    Console.ReadLine() |> ignore
-    0
 
