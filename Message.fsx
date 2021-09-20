@@ -1,7 +1,10 @@
-﻿module Message
-type MessageType = 
-    | DispatcherMessage of int*int*int
-    | WorkerMessage of int*int
-    | FinishMessage of string*string
-    | RepeatMessage
-    | PingMessage
+﻿#r "nuget: Akka.Serialization.Hyperion"
+open Akka.Serialization
+
+type Message =
+    | DispatcherMessage of int * int
+    | WorkerMessage of int * int
+    | FinishMessage of string * string
+    | RepeatMessage of int * int
+    | GiveMeWorkMessage
+    | PingMessage of string

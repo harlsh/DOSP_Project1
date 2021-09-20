@@ -1,12 +1,18 @@
 ﻿module Config
+
 #r "nuget: Akka.Remote"
 #r "nuget: Akka.FSharp"
+#r "nuget: Akka.Serialization.Hyperion"
 
 open Akka.FSharp
 open Akka.Configuration
+open Akka.Serialization
 
-let serverConfig = ConfigurationFactory.ParseString(
-                        @"akka {
+
+
+let serverConfig =
+    ConfigurationFactory.ParseString(
+        @"akka {
                                    actor {
                                        provider = ""Akka.Remote.RemoteActorRefProvider, Akka.Remote""
                                        debug : {
@@ -16,28 +22,41 @@ let serverConfig = ConfigurationFactory.ParseString(
                                            event-stream : on
                                            unhandled : on
                                        }
+                                       serializers {
+                                       hyperion = ""Akka.Serialization.HyperionSerializer, Akka.Serialization.Hyperion""
+                                        }
+                                        serialization-bindings {
+                                                               ""System.Object"" = hyperion
+                                        }
                                    }
                                    remote {
                                        helios.tcp {
-                                           port = 9001
-                                           hostname = localhost
+                                           port = 6969
+                                           hostname = 10.228.0.158
                                        }
                                    }
-                               }")
+                               }"
+    )
 
-let clientConfig = ConfigurationFactory.ParseString
-                        @"akka {
+
+
+let clientConfig =
+    ConfigurationFactory.ParseString
+        @"akka {
                             actor {
                                 provider = ""Akka.Remote.RemoteActorRefProvider, Akka.Remote""
-            
+                                serializers {
+                                hyperion = ""Akka.Serialization.HyperionSerializer, Akka.Serialization.Hyperion""
+                                }
+                                serialization-bindings {
+                                                ""System.Object"" = hyperion
+                                }
+
                             }
                             remote {
                                 helios.tcp {
-                                    port = 2552
+                                    port = 4209
                                     hostname = localhost
                                 }
                             }
                         }"
-
-
-

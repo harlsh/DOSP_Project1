@@ -7,21 +7,27 @@ open System.Diagnostics
 open Message
 
 
-let system = System.create "my-system" (Configuration.load ())
+let system =
+    System.create "my-system" (Configuration.load ())
+
 let mutable counter = 0L
 
 
 
 let generateRandomString (length: int) =
-    let characters = Array.concat (
-               [ [| 'a' .. 'z' |]
-                 [| 'A' .. 'Z' |]
-                 [| '0' .. '9' |] ]
-           )
-    let sz = Array.length characters in
-    "harishrebollavar" + String(Array.init length (fun _ -> characters.[Random().Next sz]))
+    let characters =
+        Array.concat (
+            [ [| 'a' .. 'z' |]
+              [| 'A' .. 'Z' |]
+              [| '0' .. '9' |] ]
+        )
 
-let encodeToSHA256 (str: string) = 
+    let sz = Array.length characters in
+
+    "harishrebollavar"
+    + String(Array.init length (fun _ -> characters.[Random().Next sz]))
+
+let encodeToSHA256 (str: string) =
     System.Text.Encoding.ASCII.GetBytes(str)
     |> (SHA256.Create()).ComputeHash
     |> Array.map (fun (x: byte) -> System.String.Format("{0:x2}", x))
@@ -34,89 +40,108 @@ let hasKZeros (k: int) (hash: string) =
     index.IsSome && index.Value = k
 
 
-let slaveActor(mailbox: Actor<_>) = 
-    let rec loop() = 
+let slaveActor (mailbox: Actor<_>) =
+    let rec loop () =
         actor {
             let! message = mailbox.Receive()
 
             match message with
-            | WorkerMessage(N, K) ->
+            | WorkerMessage (N, K) ->
                 for i = 2 to N + 1 do
                     let S = generateRandomString i
                     let encodedString = S |> encodeToSHA256
+
                     if encodedString |> hasKZeros K then
-                        mailbox.Sender() <! FinishMessage(S, encodedString)
-                
+                        mailbox.Sender()
+                        <! FinishMessage(S, encodedString)
+
                 mailbox.Sender() <! RepeatMessage
             | _ -> printfn "Weird Message"
 
-            return! loop()
+            return! loop ()
         }
-    loop()
 
-let masterActor (N: int) (K: int) (mailbox: Actor<_>) = 
-    let rec loop() =
+    loop ()
+
+let masterActor (N: int) (K: int) (mailbox: Actor<_>) =
+    let rec loop () =
         actor {
             let! message = mailbox.Receive()
 
             match message with
-            | DispatcherMessage(N, K, W) ->
-                let workersList = [ for i in 1 .. W do yield (spawn system ($"slave{i}") slaveActor) ]
+            | DispatcherMessage (N, K, W) ->
+                let workersList =
+                    [ for i in 1 .. W do
+                          yield (spawn system ($"slave{i}") slaveActor) ]
 
                 workersList
                 |> Seq.iter (fun worker -> printfn "%s" (worker.Path.ToString()))
+
                 workersList
                 |> Seq.iter (fun worker -> worker <! WorkerMessage(N, K))
 
-            | FinishMessage(normalString, hashString) ->
+            | FinishMessage (normalString, hashString) ->
                 printfn "\nString : %s\nHash : %s\n" normalString hashString
                 mailbox.Context.System.Terminate() |> ignore
 
-            | RepeatMessage -> 
-                mailbox.Sender() <! WorkerMessage(N, K)
+            | RepeatMessage -> mailbox.Sender() <! WorkerMessage(N, K)
 
             | _ -> printfn "Weird message"
 
-            return! loop()
+            return! loop ()
         }
-    loop()
 
-let time f = 
+    loop ()
+
+let time f =
     let proc = Process.GetCurrentProcess()
-    let cpu_time_stamp = proc.TotalProcessorTime
+    let cpuTimeStamp = proc.TotalProcessorTime
     let timer = new Stopwatch()
     timer.Start()
+
     try
-        f()
+        f ()
     finally
-        let cpu_time = (proc.TotalProcessorTime-cpu_time_stamp).TotalMilliseconds
-        let absolute_time = timer.ElapsedMilliseconds |> float
-        printfn "CPU time = %dms" (int64 cpu_time)
-        printfn "Absolute time = %fms" absolute_time
-        printfn "Ratio = %f" (cpu_time/absolute_time)
+        let cpuTime =
+            (proc.TotalProcessorTime - cpuTimeStamp)
+                .TotalMilliseconds
+
+        let absoluteTime = timer.ElapsedMilliseconds |> float
+        printfn "CPU time = %dms" (int64 cpuTime)
+        printfn "Absolute time = %fms" absoluteTime
+        printfn "Ratio = %f" (cpuTime / absoluteTime)
 
 let startCompute N K W =
     let masterRef = spawn system "master" (masterActor N K)
     masterRef <! DispatcherMessage(N, K, W)
     system.WhenTerminated.Wait()
 
-let server (mailbox: Actor<_>) = 
-    let rec loop() = actor {
-        let! message = mailbox.Receive()
-        match message with
-        | PingMessage -> printfn "Got a ping!"
-        | _ -> printfn "Weird Message"
-        
-    }
-    loop()
+let server (mailbox: Actor<_>) =
+    let rec loop () =
+        actor {
+            let! message = mailbox.Receive()
+
+            match message with
+            | PingMessage (s) -> printfn "Got a ping! %s" s
+            | _ -> printfn "Weird Message"
+
+        }
+
+    loop ()
 
 [<EntryPoint>]
 let main argv =
-    
+
     let numberOfZeros = argv.[1] |> int
     let numberOfWorkers = argv.[2] |> int
     let stringLength = 16
-    printfn "Number of Zeros = %i\nNumber of Workers = %i\nMax String Length = %i" numberOfZeros numberOfWorkers stringLength
-    time(fun () -> startCompute stringLength numberOfZeros numberOfWorkers)
+
+    printfn
+        "Number of Zeros = %i\nNumber of Workers = %i\nMax String Length = %i"
+        numberOfZeros
+        numberOfWorkers
+        stringLength
+
+    time (fun () -> startCompute stringLength numberOfZeros numberOfWorkers)
 
     0
