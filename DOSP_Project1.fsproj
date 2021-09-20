@@ -7,8 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="ShashankServer.fsx" />
-    <None Include="ShashankClient.fsx" />
     <Compile Include="Config.fsx" />
     <Compile Include="Message.fsx" />
     <Compile Include="Server.fsx" />
