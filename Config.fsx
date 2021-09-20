@@ -65,24 +65,25 @@ let serverConfig =
 
 
 let clientConfig =
-    ConfigurationFactory.ParseString
+    ConfigurationFactory.ParseString(
         @"akka {
-               actor {
-                   provider = ""Akka.Remote.RemoteActorRefProvider, Akka.Remote""
-                   serializers {
-                   hyperion = ""Akka.Serialization.HyperionSerializer, Akka.Serialization.Hyperion""
+              actor {
+                  provider = ""Akka.Remote.RemoteActorRefProvider, Akka.Remote""
+                  serializers {
+                  hyperion = ""Akka.Serialization.HyperionSerializer, Akka.Serialization.Hyperion""
                    }
-                   serialization-bindings {
-                                   ""System.Object"" = hyperion
+                  serialization-bindings {
+                                          ""System.Object"" = hyperion
                    }
+              }
 
-               }
-               remote {
-                   helios.tcp {
-                       port = 4209
-                       hostname = "
-    + localhost
-    + "
-                       }
-                   }
-               }"
+              remote {
+                  helios.tcp {
+                      port = 8778
+                      hostname = "
+        + localhost
+        + "
+                  }
+              }
+          }"
+    )

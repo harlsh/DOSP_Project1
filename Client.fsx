@@ -22,8 +22,7 @@ let W = Environment.ProcessorCount
 let serveRef =
     select $"akka.tcp://server@{serverIp}:{serverPort}/user/server" clientSystem
 
-serveRef
-<! PingMessage("Hello from the other side~~~~")
+
 
 printfn "%s" (serveRef.Path.Length.ToString())
 
@@ -105,11 +104,11 @@ let masterActor (mailbox: Actor<_>) =
 
             | RepeatMessage (N, K) -> mailbox.Sender() <! WorkerMessage(N, K)
 
-            | GiveMeWorkMessage ->
-                printfn "Requested work from server"
+            | GiveMeWorkMessage (S) ->
+                printfn "%s requested work from server" S
 
                 select $"akka.tcp://server@{serverIp}:{serverPort}/user/server" clientSystem
-                <! GiveMeWorkMessage
+                <! GiveMeWorkMessage(S)
 
             | _ -> printfn "Weird message"
 
@@ -122,7 +121,9 @@ let masterActor (mailbox: Actor<_>) =
 let localRef =
     spawn clientSystem "local-system" masterActor
 
-localRef <! GiveMeWorkMessage
+serveRef <! PingMessage(localRef.ToString())
+
+localRef <! GiveMeWorkMessage(localRef.ToString())
 
 clientSystem.WhenTerminated.Wait()
 

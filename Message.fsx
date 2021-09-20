@@ -7,5 +7,5 @@ type Message =
     | WorkerMessage of int * int
     | FinishMessage of string * string
     | RepeatMessage of int * int
-    | GiveMeWorkMessage
+    | GiveMeWorkMessage of string
     | PingMessage of string

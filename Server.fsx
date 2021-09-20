@@ -25,8 +25,8 @@ let server (mailbox: Actor<_>) =
             match message with
             | PingMessage (s) -> printfn "Got a ping! %s" s
 
-            | GiveMeWorkMessage ->
-                printfn "Assigning work:"
+            | GiveMeWorkMessage (s) ->
+                printfn "Assigning work to "
                 mailbox.Sender() <! DispatcherMessage(N, K)
             | FinishMessage (normalString, hashString) ->
                 printfn "\nString : %s\nHash : %s\n" normalString hashString
