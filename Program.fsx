@@ -1,4 +1,9 @@
-﻿module Program
+﻿#load "Config.fsx"
+#load "Message.fsx"
+
+#r "nuget: Akka.Remote"
+#r "nuget: Akka.FSharp"
+
 
 open System
 open Akka.FSharp
@@ -9,9 +14,6 @@ open Message
 
 let system =
     System.create "my-system" (Configuration.load ())
-
-let mutable counter = 0L
-
 
 
 let generateRandomString (length: int) =
@@ -55,7 +57,7 @@ let slaveActor (mailbox: Actor<_>) =
                         mailbox.Sender()
                         <! FinishMessage(S, encodedString)
 
-                mailbox.Sender() <! RepeatMessage
+                mailbox.Sender() <! RepeatMessage(N, K)
             | _ -> printfn "Weird Message"
 
             return! loop ()
@@ -63,13 +65,13 @@ let slaveActor (mailbox: Actor<_>) =
 
     loop ()
 
-let masterActor (N: int) (K: int) (mailbox: Actor<_>) =
+let masterActor (W: int) (mailbox: Actor<_>) =
     let rec loop () =
         actor {
             let! message = mailbox.Receive()
 
             match message with
-            | DispatcherMessage (N, K, W) ->
+            | DispatcherMessage (N, K) ->
                 let workersList =
                     [ for i in 1 .. W do
                           yield (spawn system ($"slave{i}") slaveActor) ]
@@ -84,7 +86,7 @@ let masterActor (N: int) (K: int) (mailbox: Actor<_>) =
                 printfn "\nString : %s\nHash : %s\n" normalString hashString
                 mailbox.Context.System.Terminate() |> ignore
 
-            | RepeatMessage -> mailbox.Sender() <! WorkerMessage(N, K)
+            | RepeatMessage (N, K) -> mailbox.Sender() <! WorkerMessage(N, K)
 
             | _ -> printfn "Weird message"
 
@@ -112,36 +114,20 @@ let time f =
         printfn "Ratio = %f" (cpuTime / absoluteTime)
 
 let startCompute N K W =
-    let masterRef = spawn system "master" (masterActor N K)
-    masterRef <! DispatcherMessage(N, K, W)
+    let masterRef = spawn system "master" (masterActor W)
+    masterRef <! DispatcherMessage(N, K)
     system.WhenTerminated.Wait()
 
-let server (mailbox: Actor<_>) =
-    let rec loop () =
-        actor {
-            let! message = mailbox.Receive()
+let numberOfZeros =
+    Environment.GetCommandLineArgs().[2] |> int
 
-            match message with
-            | PingMessage (s) -> printfn "Got a ping! %s" s
-            | _ -> printfn "Weird Message"
+let numberOfWorkers = Environment.ProcessorCount
+let stringLength = 16
 
-        }
+printfn
+    "Number of Zeros = %i\nNumber of Workers = %i\nMax String Length = %i"
+    numberOfZeros
+    numberOfWorkers
+    stringLength
 
-    loop ()
-
-[<EntryPoint>]
-let main argv =
-
-    let numberOfZeros = argv.[1] |> int
-    let numberOfWorkers = argv.[2] |> int
-    let stringLength = 16
-
-    printfn
-        "Number of Zeros = %i\nNumber of Workers = %i\nMax String Length = %i"
-        numberOfZeros
-        numberOfWorkers
-        stringLength
-
-    time (fun () -> startCompute stringLength numberOfZeros numberOfWorkers)
-
-    0
+time (fun () -> startCompute stringLength numberOfZeros numberOfWorkers)

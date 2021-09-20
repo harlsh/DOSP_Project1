@@ -11,9 +11,11 @@ open Akka.FSharp
 open System
 open System.Security.Cryptography
 
+let ipAndPort =
+    Environment.GetCommandLineArgs().[2].Split(":")
 
-let serverIp = "10.228.0.158"
-let serverPort = "6969"
+let serverIp = ipAndPort.[0]
+let serverPort = ipAndPort.[1]
 let clientSystem = System.create "client" clientConfig
 let W = Environment.ProcessorCount
 
