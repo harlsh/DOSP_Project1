@@ -26,5 +26,3 @@ The server(master) will just keep distributing the workload to the clients(slave
 4. The coin with the most zeros is<br/> ```String : harishrebollavarfDmt4    Hash : 0000000e46766ceef8bbd0f31eb8e2b97359e0ac6d90a650989620a0c1a53bad```
 5. For the distributed model, there is no limit on the number of machines. However, I've only tested my code on 3 machine with one of them being the boss machine and the other 2 just slaves.
 
-
-
