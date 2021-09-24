@@ -59,13 +59,14 @@ let slaveActor (mailbox: Actor<_>) =
 
             match message with
             | WorkerMessage (N, K) ->
-                for i = 2 to N + 1 do
-                    let S = generateRandomString i
-                    let encodedString = S |> encodeToSHA256
+                for i = 4 to N + 1 do
+                    for j = 1 to N do
+                        let S = generateRandomString i
+                        let encodedString = S |> encodeToSHA256
 
-                    if encodedString |> hasKZeros K then
-                        mailbox.Sender()
-                        <! FinishMessage(S, encodedString)
+                        if encodedString |> hasKZeros K then
+                            mailbox.Sender()
+                            <! FinishMessage(S, encodedString)
 
                 mailbox.Sender() <! RepeatMessage(N, K)
             | _ -> printfn "Weird Message"
@@ -126,6 +127,3 @@ serveRef <! PingMessage(localRef.ToString())
 localRef <! GiveMeWorkMessage(localRef.ToString())
 
 clientSystem.WhenTerminated.Wait()
-
-
-Console.ReadLine()

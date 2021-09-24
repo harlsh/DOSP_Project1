@@ -1,4 +1,5 @@
-﻿#load "Config.fsx"
+﻿#time "on"
+#load "Config.fsx"
 #load "Message.fsx"
 
 #r "nuget: Akka.Remote"
@@ -49,13 +50,14 @@ let slaveActor (mailbox: Actor<_>) =
 
             match message with
             | WorkerMessage (N, K) ->
-                for i = 2 to N + 1 do
-                    let S = generateRandomString i
-                    let encodedString = S |> encodeToSHA256
+                for i = 4 to N + 1 do
+                    for j = 1 to N do
+                        let S = generateRandomString i
+                        let encodedString = S |> encodeToSHA256
 
-                    if encodedString |> hasKZeros K then
-                        mailbox.Sender()
-                        <! FinishMessage(S, encodedString)
+                        if encodedString |> hasKZeros K then
+                            mailbox.Sender()
+                            <! FinishMessage(S, encodedString)
 
                 mailbox.Sender() <! RepeatMessage(N, K)
             | _ -> printfn "Weird Message"
@@ -130,4 +132,6 @@ printfn
     numberOfWorkers
     stringLength
 
-time (fun () -> startCompute stringLength numberOfZeros numberOfWorkers)
+startCompute stringLength numberOfZeros numberOfWorkers
+
+//time (fun () -> startCompute stringLength numberOfZeros numberOfWorkers)

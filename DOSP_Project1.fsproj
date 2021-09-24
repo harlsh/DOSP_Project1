@@ -9,8 +9,8 @@
   <ItemGroup>
     <Compile Include="Config.fsx" />
     <Compile Include="Message.fsx" />
-    <Compile Include="Server.fsx" />
     <Compile Include="Client.fsx" />
+    <Compile Include="Server.fsx" />
     <Compile Include="Program.fsx" />
   </ItemGroup>
 
